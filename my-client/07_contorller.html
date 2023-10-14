@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="btn1">点我一下</button>
+    <button id="btn2">取消</button>
+    <button id="btn3">按钮3</button>
+    <script>
+        const btn1 = document.getElementById("btn1")
+        const btn2 = document.getElementById("btn2")
+        const btn3 = document.getElementById("btn3")
+        let controller
+        btn1.onclick = () => {
+            // 创建一个AbortController
+            controller = new AbortController()
+            // setTimeout(() => {
+            //     controller.abort()
+            // },3000)
+            fetch("http://localhost:3000/test",{
+                signal:controller.signal
+            }).then(res => {console.log(res);}).catch(e => {"出错了",e})
+        }
+        btn2.onclick = () => {
+            controller && controller.abort()
+        }
+        btn3.onclick = async () => {
+            // 注意：将Promise改写为await时，一定要写try-catch
+            try{
+                const res = await fetch("http://localhost:3000/students")
+                const data = await res.json()
+                console.log(data);
+            }catch(e){
+                console.log("出错了",e);
+            }
+        }
+    </script>
+</body>
+</html>

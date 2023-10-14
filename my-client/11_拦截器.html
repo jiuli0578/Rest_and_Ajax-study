@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <button id="btn01">按钮一</button>
+    <button id="btn02">按钮二</button>
+    <script>
+        axios.defaults.baseURL = "http://localhost:3000",
+        /* 
+            axios拦截器可以对请求或响应进行拦截，
+                在请求发送前和响应读取前处理数据
+                拦截器只对当前的实例有效
+        */
+        // 添加请求拦截器,拦截器位于请求和服务器之间
+        axios.interceptors.request.use(
+            function(config){
+                // 在请求发送之前执行
+                // console.log("拦截器执行了");
+                // config   表示axios中的配置对象
+                // console.log(config);
+                // config.data.name = "猪哈哈"
+                config.headers["Authorization"] = `Bearer ${localStorage.getItem("token")}`
+                // 在发送请求前做什么
+                return config
+            },function(error){
+                // 对请求错误做些什么
+                return Promise.reject(error)
+            }
+        )
+        // 添加响应拦截器
+        axios.interceptors.response.use(function(response){
+            // 响应状态码为2xx的都会触发该函数
+            // 对响应数据做些什么
+            return response
+        },function(error){
+            // 超出2xx的响应状态码都会触发该函数
+            // 对响应错误做些什么
+            return Promise.reject(error)
+        })
+        document.getElementById("btn01").onclick = () => {
+            axios.get("students")
+                .then(res => console.log(res.data))
+                .catch(err => console.log("出错了",err))
+        }   
+        document.getElementById("btn02").onclick = () => {
+            axios({
+                url:"students",
+                method:"post",
+                data:{name:"猪八戒"}
+            }).then(result => {
+                // axios默认只会在响应状态码为2xx时才会调用then
+                console.log(result.data);
+            }).catch(err => {
+                console.log("出错了！",err);
+            })
+        } 
+    </script>
+</body>
+</html>

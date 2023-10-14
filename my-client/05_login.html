@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table{
+            border-collapse: collapse;
+            width: 50%;
+        }
+        caption{
+            font-size: 30px;
+            font-weight: bold;
+        }
+        th,td{
+            font-size: 20px;
+            text-align: center;
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <h1>请登陆后再操作</h1>
+        <h2 id="info"></h2>
+        <form>
+            <div>
+                <input type="text" id="username">
+            </div>
+            <div>
+                <input type="password" id="password">
+            </div>
+            <div>
+                <button id="login-btn" type="button">登录</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        const loginBtn = document.getElementById("login-btn")
+        const root = document.getElementById("root")
+
+        function loadData(){
+            const token = localStorage.getItem("token")
+            // 当我们需要访问的是需要权限的api时，必须在请求中附加权限信息
+            // token一般都是通过请求头来发送
+            fetch("http://localhost:3000/students",{
+                headers:{
+                    // 格式要求 前面必须要有 Bearer
+                    "Authorization":`Bearer ${token}`
+                }
+            })
+                .then((res) => {
+                    if(res.status === 200){
+                        //res.json() 可以用来读取json格式的数据
+                        return res.json()
+                    }else{
+                        throw new Error("加载失败!")
+                    }
+                }).then((res) => {
+                    //获取到数据后，将数据渲染到页面上
+                    if(res.status === "ok"){
+                        //创建一个table
+                        const dataDiv = document.getElementById("data")
+                        const table = document.createElement("table")
+                        dataDiv.appendChild(table)
+                        table.insertAdjacentHTML("beforeend","<caption>学生列表</caption>")
+                        table.insertAdjacentHTML("beforeend",`
+                            <thead>
+                                <th>学号</th> 
+                                <th>姓名</th> 
+                                <th>年龄</th> 
+                                <th>性别</th> 
+                                <th>住址</th>    
+                            </thead>
+                        `)
+
+                        const tbody = document.createElement("tbody")
+                        table.appendChild(tbody)
+                        // 遍历数组
+                        for(let stu of res.data){
+                            table.insertAdjacentHTML("beforeend",`
+                                <tbody>
+                                    <td>${stu.id}</td> 
+                                    <td>${stu.name}</td> 
+                                    <td>${stu.age}</td> 
+                                    <td>${stu.gender}</td> 
+                                    <td>${stu.address}</td>    
+                                </tbody>
+                            `)
+                        }
+                    }
+                }).catch((err) => {
+                    console.log("出错了!",err);
+                })
+        }
+
+        // 判断用户是否登录
+        if(localStorage.getItem("token")){
+            // 用户已经登录
+            root.innerHTML = `
+                        <h1>欢迎回来 ${localStorage.getItem("nickname")}</h1>
+                        <hr>
+                        <button id="load-btn" onclick="loadData()">加载数据</button>
+                        <button onclick="localStorage.clear()">注销登录</button>
+                        <hr>
+                        <div id="data"></div>
+                    `
+        }
+        loginBtn.onclick = () => {
+            const username = document.getElementById("username").value.trim()
+            const password = document.getElementById("password").value.trim() 
+            fetch("http://localhost:3000/login",{
+                method:"POST",
+                headers:{
+                    "Content-type":"application/json"
+                },
+                body:JSON.stringify({username,password})
+            })
+            .then((res) => res.json())
+            .then((res) => {
+                if(res.status !== "ok"){
+                    throw new Error()
+                }else{
+                    /* 
+                        登陆成功后，需要保持用户的登陆状态，需要将用户的信息存储到某个地方
+                        本地存储
+                            -所谓的本地存储就是指浏览器自身的存储空间
+                                可以将用户的数据存储到浏览器内部
+                            localStorage存储的时间比较长
+                            sessionStorage存储的数据，页面一关闭就会丢失
+                    */
+                    // localStorage.setItem("userid",res.data.id)
+                    // localStorage.setItem("username",res.data.username)
+                    // localStorage.setItem("nickname",res.data.nickname)
+                    localStorage.setItem("token",res.data.token)
+                    localStorage.setItem("nickname",res.data.nickname)
+                    // 登陆成功
+                    root.innerHTML = `
+                        <h1>欢迎回来 ${res.data.nickname}</h1>
+                        <hr>
+                        <button id="load-btn" onclick="loadData()">加载数据</button>
+                        <button onclick="localStorage.clear()">注销登录</button>
+                        <hr>
+                        <div id="data"></div>
+                    `
+                }
+            })
+            .catch(err => {
+                document.getElementById("info").innerText = "用户名或密码错误"
+            })
+        }
+    </script>
+    <!-- 
+        登陆后直接将用户的信息存储到了localStorage
+            -存在的问题：
+                1.数据安全问题
+                2.服务器不知道你是否登录
+            -解决方案：
+                如何展示给服务器客户端的登录状态
+                    -rest风格的服务器是无状态的服务器，所以注意不要在服务器中存储用户的数据
+                    -服务器中不能存储用户信息，可以将用户的信息发送给客户端保存
+                        客户端每次访问服务器时，直接将用户信息发回，服务器就可以根据用户信息来识别用户的身份
+                    -但是如果直接将数据发送给客户端同样会有数据安全的问题
+                        所以必须对数据进行加密，加密后再发送给客户端保存，这样既可避免数据的泄露
+                    -在node中可以直接使用jsonwebtoken这个包来对数据进行加密
+                        jsonwebtoken（jwt） ==> 通过对json加密后，生成一个web中使用的令牌
+                        -使用步骤：
+                            1.安装：
+                                yarn add jsonwebtoken
+                            2.引入：
+                            3....
+
+
+     -->
+</body>
+</html>

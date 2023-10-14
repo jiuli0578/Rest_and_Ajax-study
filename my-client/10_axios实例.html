@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <button id="btn01">按钮一</button>
+    <button id="btn02">按钮二</button>
+    <script>
+        axios.defaults.baseURL = "http://localhost:3000",
+        axios.defaults.headers.common[
+            "Authorization"
+        ] = `Bearer ${localStorage.getItem("token")}`
+        // axios实例相当于是一个axios的副本，它的功能和axios一样
+        // axios在实例上也同样会生效，但是我们可以单独修改axios实例的默认配置
+        const instance = axios.create()
+        // const instance = axios.create({
+        //     baseURL:"http://localhost:4000"
+        // })
+        // instance.defaults.baseURL = "http://localhost:4000"
+        document.getElementById("btn01").onclick = () => {
+            instance.get("students")
+                .then(res => console.log(res.data))
+                .catch(err => console.log("出错了",err))
+        }   
+        document.getElementById("btn02").onclick = () => {
+            // 直接调用axios发送请求
+            // axios(config)
+            axios({
+                method:"get",
+                url:"http://localhost:3000/students",
+            }).then(result => {
+                // axios默认只会在响应状态码为2xx时才会调用then
+                console.log(result.data);
+            }).catch(err => {
+                console.log("出错了！",err);
+            })
+        }
+    </script>
+</body>
+</html>

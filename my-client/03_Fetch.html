@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table{
+            border-collapse: collapse;
+            width: 50%;
+        }
+        caption{
+            font-size: 30px;
+            font-weight: bold;
+        }
+        th,td{
+            font-size: 20px;
+            text-align: center;
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>AJAX测试</h1>
+    <hr>
+    <button id="btn">点我加载数据</button>
+    <hr>
+    <div id="root"></div>
+    <script>
+        const btn = document.getElementById("btn")
+        const root = document.getElementById("root")
+        btn.onclick = () => {
+            /* 
+                fetch
+                    -fetch是xhr的升级版，采用的是Promise API
+                        作用是和AJAX一样的，但是使用起来更加友好
+                    -fetch是原生js就支持的一种请求的方式
+            */
+            fetch("http://localhost:3000/students")
+                .then((res) => {
+                    if(res.status === 200){
+                        //res.json() 可以用来读取json格式的数据
+                        return res.json()
+                    }else{
+                        throw new Error("加载失败!")
+                    }
+                }).then((res) => {
+                    //获取到数据后，将数据渲染到页面上
+                    if(res.status === "ok"){
+                        //创建一个table
+                        const table = document.createElement("table")
+                        root.appendChild(table)
+                        table.insertAdjacentHTML("beforeend","<caption>学生列表</caption>")
+                        table.insertAdjacentHTML("beforeend",`
+                            <thead>
+                                <th>学号</th> 
+                                <th>姓名</th> 
+                                <th>年龄</th> 
+                                <th>性别</th> 
+                                <th>住址</th>    
+                            </thead>
+                        `)
+
+                        const tbody = document.createElement("tbody")
+                        table.appendChild(tbody)
+                        // 遍历数组
+                        for(let stu of res.data){
+                            table.insertAdjacentHTML("beforeend",`
+                                <tbody>
+                                    <td>${stu.id}</td> 
+                                    <td>${stu.name}</td> 
+                                    <td>${stu.age}</td> 
+                                    <td>${stu.gender}</td> 
+                                    <td>${stu.address}</td>    
+                                </tbody>
+                            `)
+                        }
+                    }
+                }).catch((err) => {
+                    console.log("出错了!",err);
+                })
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <button id="btn01">按钮一</button>
+    <button id="btn02">按钮二</button>
+    <script>
+        // 默认路径
+        axios.defaults.baseURL = "http://localhost:3000",
+        // 请求头
+        axios.defaults.headers.common[
+            "Authorization"
+        ] = `Bearer ${localStorage.getItem("token")}`,
+        document.getElementById("btn01").onclick = () => {
+            // 直接调用axios发送请求
+            // axios(config)
+            axios({
+                url:"students",
+                method:"post",
+                data:{
+                    name:"唐僧",
+                    age:16,
+                    gender:"男",
+                    address:"东土大唐"
+                },
+                timeout:1000,
+            }).then(result => {
+                // result是axios封装过
+                console.log(result.data);
+            }).catch(err => {
+                console.log("出错了！",err);
+            })
+        }
+        document.getElementById("btn02").onclick = () => {
+            // 直接调用axios发送请求
+            // axios(config)
+            axios({
+                method:"get",
+                url:"http://localhost:3000/students",
+            }).then(result => {
+                // axios默认只会在响应状态码为2xx时才会调用then
+                console.log(result.data);
+            }).catch(err => {
+                console.log("出错了！",err);
+            })
+        }
+    </script>
+</body>
+</html>
